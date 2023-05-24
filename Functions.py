@@ -1,6 +1,5 @@
 import numpy as np
 from sklearn.cluster import KMeans
-from scipy.spatial.distance import cdist
 
 
 def bkmeans(x_data, num_of_clusters, iterations):
@@ -31,33 +30,43 @@ def bkmeans(x_data, num_of_clusters, iterations):
     return final_indices
 
 
-def sammon(x_data, iterations, error_threshold, learning_rate):
-    Y = np.random.normal(0, 1, size=(x_data.shape[0], 2))
+def update_layout(X, y, alpha, c, min_threshold):
+    partial1, partial2 = np.zeros(2), np.zeros(2)
+    for j in range(X.shape[0]):
+        for k in range(X.shape[0]):
+            if k != j:
+                x_diff, y_diff = np.subtract(X[j], X[k]), np.subtract(y[j], y[k])
+                delta_x, delta_y = np.linalg.norm(x_diff), np.linalg.norm(y_diff)
+                divergence, denominator = np.subtract(delta_x, delta_y), np.multiply(delta_x, delta_y)
+                # limiting the denominator to a minimum value
+                denominator = np.maximum(denominator, min_threshold)
+                # calculating the partial derivatives
+                partial1 += (divergence / denominator) * y_diff
+                partial2 += (1 / denominator) * (
+                        divergence - (((y_diff ** 2) / delta_y) * (1 + (divergence / delta_y))))
+
+        y_update = (((-2 / c) * partial1) / np.abs(((-2 / c) * partial2)))
+        y[j] -= alpha * y_update
+    return y
+
+
+def sammon(X, iterations, error, alpha):
+    min_threshold = 1e-6
+    # 1. Start with a random two-dimensional layout Y of points (Y is a n × 2 matrix).
+    y = np.random.normal(0, 1, size=(X.shape[0], 2))
+    x_dist = np.linalg.norm(X[:, np.newaxis] - X, axis=2)
+    c = np.sum(x_dist) / 2
     for i in range(iterations):
-        D = cdist(x_data, x_data)  # original space
-        y_dist = cdist(Y, Y)  # target space
-        # compute the stress E of Y.
-        E_stress = (np.sum((D - y_dist) ** 2) / np.sum(D)) / 2  # stress E on y_dist
-        if E_stress < error_threshold or iterations - 1 == i:
-            return Y
-        delta = D - y_dist
-        scaling_factor = D * (y_dist + 1e-10)
+        y_dist = np.linalg.norm(y[:, np.newaxis] - y, axis=2)
+        # 2. Compute the stress E of Y
+        E = (np.sum((x_dist - y_dist) ** 2) / np.sum(x_dist)) / 2
+        # 3. If E < e, or if the maximum number of iterations iter has been reached, stop.
+        if E < error or iterations - 1 == i:
+            return y
+        # 4. For each yi of Y , find the next vector yi(t + 1) based on the current yi(t)
+        y = update_layout(X, y, alpha, c, min_threshold)
+    return y
 
-        # Calculate the gradient for each point in the layout
-        gradient = np.zeros((x_data.shape[0], 2))
-        for j in range(x_data.shape[0]):
-            for k in range(x_data.shape[0]):
-                if j != k:
-                    diff = Y[j] - Y[k]
-                    distance = np.linalg.norm(diff)
-                    factor = (delta[j, k] - distance) / (distance * (delta[j, k] + 1e-10))
-                    gradient[j] += factor * diff
-        Y -= learning_rate / np.sqrt(i + 1) * gradient
-    return Y
-
-
-def sammon_new(x_data, iterations, error_threshold, learning_rate):
-    pass
 
 
 
