@@ -30,6 +30,7 @@ def bkmeans(x_data, num_of_clusters, iterations):
     return final_indices
 
 
+# Inner function for sammon algorithm
 def update_layout(X, y, alpha, c, min_threshold):
     partial1, partial2 = np.zeros(2), np.zeros(2)
     for j in range(X.shape[0]):
@@ -61,12 +62,8 @@ def sammon(X, iterations, error, alpha):
         # 2. Compute the stress E of Y
         E = (np.sum((x_dist - y_dist) ** 2) / np.sum(x_dist)) / 2
         # 3. If E < e, or if the maximum number of iterations iter has been reached, stop.
-        if E < error or iterations - 1 == i:
+        if E < error:
             return y
         # 4. For each yi of Y , find the next vector yi(t + 1) based on the current yi(t)
         y = update_layout(X, y, alpha, c, min_threshold)
     return y
-
-
-
-
