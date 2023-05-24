@@ -1,5 +1,7 @@
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 
 def bkmeans(x_data, num_of_clusters, iterations):
@@ -67,3 +69,18 @@ def sammon(X, iterations, error, alpha):
         # 4. For each yi of Y , find the next vector yi(t + 1) based on the current yi(t)
         y = update_layout(X, y, alpha, c, min_threshold)
     return y
+
+
+def generate_dr_results(X_values, iterations, error, alpha):
+    results = {}
+    for i, X in enumerate(X_values):
+        pca = PCA(n_components=2)
+        tsne = TSNE(n_components=2)
+        pca_result = pca.fit_transform(X)
+        tsne_result = tsne.fit_transform(X)
+        sammon_result = sammon(X, iterations, error, alpha)
+
+        results[f'pca_X{i}'] = pca_result
+        results[f'tsne_X{i}'] = tsne_result
+        results[f'sammon_X{i}'] = sammon_result
+    return results
