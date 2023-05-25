@@ -42,7 +42,8 @@ def update_layout(X, y, alpha, c, min_threshold):
                 delta_x, delta_y = np.linalg.norm(x_diff), np.linalg.norm(y_diff)
                 divergence, denominator = np.subtract(delta_x, delta_y), np.multiply(delta_x, delta_y)
                 # limiting the denominator to a minimum value
-                denominator = np.maximum(denominator, min_threshold)
+                if denominator < min_threshold:
+                    denominator = min_threshold
                 # calculating the partial derivatives
                 partial1 += (divergence / denominator) * y_diff
                 partial2 += (1 / denominator) * (
@@ -54,18 +55,19 @@ def update_layout(X, y, alpha, c, min_threshold):
 
 
 def sammon(X, iterations, error, alpha):
-    min_threshold = 1e-6
+    min_threshold = 1e-4
     # 1. Start with a random two-dimensional layout Y of points (Y is a n × 2 matrix).
     y = np.random.normal(0, 1, size=(X.shape[0], 2))
     x_dist = np.linalg.norm(X[:, np.newaxis] - X, axis=2)
     c = np.sum(x_dist) / 2
     for i in range(iterations):
         y_dist = np.linalg.norm(y[:, np.newaxis] - y, axis=2)
-        # 2. Compute the stress E of Y
-        E = (np.sum((x_dist - y_dist) ** 2) / np.sum(x_dist)) / 2
+        # 2. Compute the stress E of Y after every 5 iterations
+        if i % 5 == 0:
+            E = (np.sum((x_dist - y_dist) ** 2) / np.sum(x_dist)) / 2
         # 3. If E < e, or if the maximum number of iterations iter has been reached, stop.
-        if E < error:
-            return y
+            if E < error:
+                return y
         # 4. For each yi of Y , find the next vector yi(t + 1) based on the current yi(t)
         y = update_layout(X, y, alpha, c, min_threshold)
     return y
