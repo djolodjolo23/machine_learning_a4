@@ -2,16 +2,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
-import matplotlib.pyplot as plt
-
-#%%
-data = pd.read_csv('data/diabetes.csv')
-# reduce samples to 600
-data = data.sample(500)
-X = data.drop('Outcome', axis=1).to_numpy()
-y = data['Outcome'].to_numpy()
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from scipy.cluster.hierarchy import dendrogram, linkage
 
 
 def bkmeans(x_data, num_of_clusters, iterations):
@@ -62,7 +55,7 @@ def update_layout(X, y, alpha, c, min_threshold):
         y[j] -= alpha * y_update
     return y
 
-# 0005 not bad
+
 def sammon(X, iterations, error, alpha):
     min_threshold = 1e-6
     # 1. Start with a random two-dimensional layout Y of points (Y is a n × 2 matrix).
@@ -84,10 +77,12 @@ def sammon(X, iterations, error, alpha):
 
 def generate_dr_results(X_values, iterations, error, alpha):
     results = {}
+    scaler = StandardScaler()
     for i, X in enumerate(X_values):
         pca = PCA(n_components=2)
         tsne = TSNE(n_components=2)
-        pca_result = pca.fit_transform(X)
+        X_scaled = scaler.fit_transform(X)
+        pca_result = pca.fit_transform(X_scaled)
         tsne_result = tsne.fit_transform(X)
         sammon_result = sammon(X, iterations, error, alpha)
 
@@ -95,3 +90,14 @@ def generate_dr_results(X_values, iterations, error, alpha):
         results[f'tsne_X{i}'] = tsne_result
         results[f'sammon_X{i}'] = sammon_result
     return results
+
+def generate_clustering_results(selected_dr):
+    clustering_results = {}
+    for i, dr in enumerate(selected_dr):
+        bkmeans = bkmeans(dr, 5, 20)
+        kmeans = KMeans(n_clusters=5, random_state=0).fit(dr)
+        linkage_matrix = linkage(dr, method='complete', metric='euclidean')
+        clustering_results[f'bkmeans_X{i}'] = bkmeans
+        clustering_results[f'kmeans_X{i}'] = kmeans.labels_
+        clustering_results[f'hierarchical_clustering_X{i}'] = linkage_matrix
+    return clustering_results
