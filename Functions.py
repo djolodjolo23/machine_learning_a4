@@ -2,6 +2,16 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#%%
+data = pd.read_csv('data/diabetes.csv')
+# reduce samples to 600
+data = data.sample(500)
+X = data.drop('Outcome', axis=1).to_numpy()
+y = data['Outcome'].to_numpy()
 
 
 def bkmeans(x_data, num_of_clusters, iterations):
@@ -42,8 +52,7 @@ def update_layout(X, y, alpha, c, min_threshold):
                 delta_x, delta_y = np.linalg.norm(x_diff), np.linalg.norm(y_diff)
                 divergence, denominator = np.subtract(delta_x, delta_y), np.multiply(delta_x, delta_y)
                 # limiting the denominator to a minimum value
-                if denominator < min_threshold:
-                    denominator = min_threshold
+                denominator = np.maximum(denominator, min_threshold)
                 # calculating the partial derivatives
                 partial1 += (divergence / denominator) * y_diff
                 partial2 += (1 / denominator) * (
@@ -53,9 +62,9 @@ def update_layout(X, y, alpha, c, min_threshold):
         y[j] -= alpha * y_update
     return y
 
-
+# 0005 not bad
 def sammon(X, iterations, error, alpha):
-    min_threshold = 1e-4
+    min_threshold = 1e-6
     # 1. Start with a random two-dimensional layout Y of points (Y is a n × 2 matrix).
     y = np.random.normal(0, 1, size=(X.shape[0], 2))
     x_dist = np.linalg.norm(X[:, np.newaxis] - X, axis=2)
