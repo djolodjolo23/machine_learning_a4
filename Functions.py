@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 
+# bkmeans algorithm
 def bkmeans(x_data, num_of_clusters, iterations):
     global cluster1, sse2, sse1, cluster2, leftover_indices
     normalized_x_data = (x_data - np.mean(x_data)) / np.std(x_data)
@@ -75,6 +76,7 @@ def sammon(X, iterations, error, alpha):
     return y
 
 
+# Generate results function for DR algorithms
 def generate_dr_results(X_values, iterations, error, alpha):
     results = {}
     scaler = StandardScaler()
@@ -85,19 +87,25 @@ def generate_dr_results(X_values, iterations, error, alpha):
         pca_result = pca.fit_transform(X_scaled)
         tsne_result = tsne.fit_transform(X)
         sammon_result = sammon(X, iterations, error, alpha)
-
         results[f'pca_X{i}'] = pca_result
         results[f'tsne_X{i}'] = tsne_result
         results[f'sammon_X{i}'] = sammon_result
     return results
 
+
+# Generate results function for clustering algorithms
 def generate_clustering_results(selected_dr):
+    global kmeans, bkmeans_res
     clustering_results = {}
     for i, dr in enumerate(selected_dr):
-        bkmeans = bkmeans(dr, 5, 20)
-        kmeans = KMeans(n_clusters=5, random_state=0).fit(dr)
+        if i == 0:
+            bkmeans_res = bkmeans(dr, 4, 20)
+            kmeans = KMeans(n_clusters=4, random_state=0).fit(dr)
+        else:
+            bkmeans_res = bkmeans(dr, 3, 20)
+            kmeans = KMeans(n_clusters=3, random_state=0).fit(dr)
         linkage_matrix = linkage(dr, method='complete', metric='euclidean')
-        clustering_results[f'bkmeans_X{i}'] = bkmeans
+        clustering_results[f'bkmeans_X{i}'] = bkmeans_res
         clustering_results[f'kmeans_X{i}'] = kmeans.labels_
         clustering_results[f'hierarchical_clustering_X{i}'] = linkage_matrix
     return clustering_results
