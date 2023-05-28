@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
@@ -16,17 +15,17 @@ def bkmeans(x_data, num_of_clusters, iterations):
     min_sse = 0
     for i in range(1, num_of_clusters):
         for j in range(iterations):
-            kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit(current_x_data)
-            current_sse = kmeans.inertia_
+            current_kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit(current_x_data)
+            current_sse = current_kmeans.inertia_
             if current_sse < min_sse or min_sse == 0:
                 min_sse = current_sse
-                cluster1, cluster2 = current_x_data[kmeans.labels_ == 0], current_x_data[kmeans.labels_ == 1]
+                cluster1, cluster2 = current_x_data[current_kmeans.labels_ == 0], current_x_data[current_kmeans.labels_ == 1]
                 sse1, sse2 = np.sum((cluster1 - np.mean(cluster1)) ** 2), np.sum((cluster2 - np.mean(cluster2)) ** 2)
                 leftover_indices = np.copy(final_indices[final_indices == 0])
                 if sse1 > sse2:
-                    leftover_indices[kmeans.labels_ == 1] = i
+                    leftover_indices[current_kmeans.labels_ == 1] = i
                 else:
-                    leftover_indices[kmeans.labels_ == 0] = i
+                    leftover_indices[current_kmeans.labels_ == 0] = i
         if sse1 > sse2:
             current_x_data = cluster1
         else:
