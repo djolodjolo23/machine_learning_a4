@@ -15,22 +15,29 @@ def bkmeans(x_data, num_of_clusters, iterations):
     min_sse = 0
     for i in range(1, num_of_clusters):
         for j in range(iterations):
+            # running kmeans algorithm on the current cluster
             current_kmeans = KMeans(n_clusters=2, random_state=0, n_init=10).fit(current_x_data)
             current_sse = current_kmeans.inertia_
+            # updating the minimum SSE and the clusters with the minimum SSE, if needed
             if current_sse < min_sse or min_sse == 0:
                 min_sse = current_sse
                 cluster1, cluster2 = current_x_data[current_kmeans.labels_ == 0], current_x_data[current_kmeans.labels_ == 1]
                 sse1, sse2 = np.sum((cluster1 - np.mean(cluster1)) ** 2), np.sum((cluster2 - np.mean(cluster2)) ** 2)
+                # copying the final indices where value is zero to a new array
+                # this is done in order to update the final indices with the new cluster indices
                 leftover_indices = np.copy(final_indices[final_indices == 0])
                 if sse1 > sse2:
                     leftover_indices[current_kmeans.labels_ == 1] = i
                 else:
                     leftover_indices[current_kmeans.labels_ == 0] = i
+        # continuing bisection on the cluster with the higher SSE
         if sse1 > sse2:
             current_x_data = cluster1
         else:
             current_x_data = cluster2
+        # updating the final indices with the new cluster indices
         final_indices[final_indices == 0] = leftover_indices
+    # Adding the last cluster to the final indices, changing the 0's to the last cluster number
     final_indices[final_indices == 0] = num_of_clusters
     return final_indices
 
@@ -75,7 +82,7 @@ def sammon(X, iterations, error, alpha):
     return y
 
 
-# Generate results function for DR algorithms
+# Generating results function for DR algorithms
 def generate_dr_results(X_values, iterations, error, alpha):
     results = {}
     scaler = StandardScaler()
@@ -92,7 +99,7 @@ def generate_dr_results(X_values, iterations, error, alpha):
     return results
 
 
-# Generate results function for clustering algorithms
+# Generating results function for clustering algorithms
 def generate_clustering_results(selected_dr):
     global kmeans, bkmeans_res
     clustering_results = {}
